@@ -4,42 +4,149 @@
 
 Author: mathslinux <riegamaths@gmail.com>
 URL: http://mathslinux.org
-Version: 0.0.1
+Version: 0.0.2
 
-For google engine i use the xgoogle's Translator module to get it work. 
-chinese this version.
 """
 
 __author__ = 'mathslinux'
-__version__ = '0.0.1'
+__version__ = '0.0.2'
 
 # Append xgoogle to system path
 import sys, os
-sys.path.append(os.path.join(os.path.split(__file__)[0], 'xgoogle'))
-
 import getopt
 
-from xgoogle.translate import Translator, TranslationError
+_engine = ('google', 'stardict')
 
-class Google(object):
+_languages = {
+    'af': 'Afrikaans',
+    'sq': 'Albanian',
+    'am': 'Amharic',
+    'ar': 'Arabic',
+    'hy': 'Armenian',
+    'az': 'Azerbaijani',
+    'eu': 'Basque',
+    'be': 'Belarusian',
+    'bn': 'Bengali',
+    'bh': 'Bihari',
+    'bg': 'Bulgarian',
+    'my': 'Burmese',
+    'ca': 'Catalan',
+    'chr': 'Cherokee',
+    'zh': 'Chinese',
+    'zh-CN': 'Chinese_simplified',
+    'zh-TW': 'Chinese_traditional',
+    'hr': 'Croatian',
+    'cs': 'Czech',
+    'da': 'Danish',
+    'dv': 'Dhivehi',
+    'nl': 'Dutch',
+    'en': 'English',
+    'eo': 'Esperanto',
+    'et': 'Estonian',
+    'tl': 'Filipino',
+    'fi': 'Finnish',
+    'fr': 'French',
+    'gl': 'Galician',
+    'ka': 'Georgian',
+    'de': 'German',
+    'el': 'Greek',
+    'gn': 'Guarani',
+    'gu': 'Gujarati',
+    'iw': 'Hebrew',
+    'hi': 'Hindi',
+    'hu': 'Hungarian',
+    'is': 'Icelandic',
+    'id': 'Indonesian',
+    'iu': 'Inuktitut',
+    'ga': 'Irish',
+    'it': 'Italian',
+    'ja': 'Japanese',
+    'kn': 'Kannada',
+    'kk': 'Kazakh',
+    'km': 'Khmer',
+    'ko': 'Korean',
+    'ku': 'Kurdish',
+    'ky': 'Kyrgyz',
+    'lo': 'Laothian',
+    'lv': 'Latvian',
+    'lt': 'Lithuanian',
+    'mk': 'Macedonian',
+    'ms': 'Malay',
+    'ml': 'Malayalam',
+    'mt': 'Maltese',
+    'mr': 'Marathi',
+    'mn': 'Mongolian',
+    'ne': 'Nepali',
+    'no': 'Norwegian',
+    'or': 'Oriya',
+    'ps': 'Pashto',
+    'fa': 'Persian',
+    'pl': 'Polish',
+    'pt-PT': 'Portuguese',
+    'pa': 'Punjabi',
+    'ro': 'Romanian',
+    'ru': 'Russian',
+    'sa': 'Sanskrit',
+    'sr': 'Serbian',
+    'sd': 'Sindhi',
+    'si': 'Sinhalese',
+    'sk': 'Slovak',
+    'sl': 'Slovenian',
+    'es': 'Spanish',
+    'sw': 'Swahili',
+    'sv': 'Swedish',
+    'tg': 'Tajik',
+    'ta': 'Tamil',
+    'tl': 'Tagalog',
+    'te': 'Telugu',
+    'th': 'Thai',
+    'bo': 'Tibetan',
+    'tr': 'Turkish',
+    'uk': 'Ukrainian',
+    'ur': 'Urdu',
+    'uz': 'Uzbek',
+    'ug': 'Uighur',
+    'vi': 'Vietnamese',
+    'cy': 'Welsh',
+    'yi': 'Yiddish'
+    };
+
+class GoogleTranslator(object):
     """ Google search engine
-    
-    Use the xgoogle to translate.
     """
 
     def __init__(self):
         pass
 
     def translate(self, search_text, f='', t='zh'):
-        """ !!!Note, if f is empty, auto-detects the language.
-        if t is empty, the real value of lang_to is 'en'
+        """ !!!Note, if f is empty, auto-detects the source language.
+        if t is empty, the real value of lang_to is 'zh'
+        
         """
-        try:
-            return Translator().translate(search_text, lang_from=f, lang_to=t).encode('utf-8')
-        except TranslationError, e:
-            return e
 
-class Stardict(object):
+        if t not in _languages:
+            raise 'Translate to language %s is not supported.' % t
+        if not f and f not in _languages:
+            raise 'Translate from language %s is not supported' % (f)
+
+        buf = {'v': '1.0',
+               'q': 'search_text',
+               'langpair': '%s|%s' %(f, t)
+               }
+        buf = urllib.urlencode(buf)
+        translate_url = "http://ajax.googleapis.com/ajax/services/language/translate?"
+        try:
+            resp = urllib2.urlopen(translate_url, buf)
+            data = json.loads(resp.read())
+            if data['responseStatus'] != 200:
+                raise "Something error happen."
+            return data['responseData']['translatedText']
+        except:
+            raise "Something error happen."
+        
+        return None
+        
+class StardictTranslator(object):
     """ Use stardict to translate
     """
 
@@ -48,18 +155,6 @@ class Stardict(object):
 
     def translate(self, search_text):
         return 'Not support now'
-
-class Edict(object):
-    def __init__(self, engine='google'):
-        self.engine = engine
-        
-    def translate(self, search_text, f='', t='zh'):
-        if self.engine == 'google':
-            return Google().translate(search_text, f, t)
-        elif self.engine == 'stardict':
-            return Stardict.translate(search_text, f, t)
-        else:
-            return 'No such engine %s' %(self.engine)
         
 def usage():
     usage = """Usage: edict [options] text
@@ -74,7 +169,24 @@ def usage():
        -t, --to
            to language"""
     print usage
-    
+
+def do_search(engine, search_text, f, t):
+    if engine not in _engine:
+        print 'Not support search engine.'
+
+    translation = ''
+    if engine == 'google':
+        translation = GoogleTranslator().translate(search_text, f, t)
+    elif engine == 'stardict':
+        translation = StardictTranslator.translate(search_text, f, t)
+    else:
+        return 'No such engine %s' %(self.engine)
+
+    if translation:
+        return translation
+    else:
+        print 'Something error.'
+                
 if __name__ == '__main__':
     if len(sys.argv) < 2:
         usage()
@@ -109,5 +221,6 @@ if __name__ == '__main__':
             
     search_text = ' '.join(args).strip()
     print search_text
-    print Edict(engine).translate(search_text, f, t)
+    print do_search(engine, search_text, f, t)
 
+    
