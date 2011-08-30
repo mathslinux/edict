@@ -1,3 +1,10 @@
+2011-08-30  mathslinux  <riegamaths@gmail.com>
+
+	* Version 0.0.2 released
+
+	* edict.py: Support stardict engine, which uses the oxford
+	dictionary.
+
 2011-07-26  mathslinux  <riegamaths@gmail.com>
 
 	* Version 0.0.1 released
