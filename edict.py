@@ -293,7 +293,7 @@ if __name__ == '__main__':
         usage()
 	sys.exit()
 
-    engine = 'google'
+    engine = 'stardict'
     f = ''
     t = 'zh'
     

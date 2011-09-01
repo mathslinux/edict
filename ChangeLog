@@ -1,3 +1,7 @@
+2011-09-01  mathslinux  <riegamaths@gmail.com>
+
+	* edict.py (do_search): Modify default engine from google to stardict.
+
 2011-08-30  mathslinux  <riegamaths@gmail.com>
 
 	* Version 0.0.2 released
